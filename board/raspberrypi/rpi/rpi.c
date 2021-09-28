@@ -495,6 +495,67 @@ void *board_fdt_blob_setup(void)
 	return (void *)fw_dtb_pointer;
 }
 
+void copy_emmc_config(void *our_fdt)
+{
+	/*
+	 * As of 2021-09-28, the Pi 4 has two different revisions, one using a
+	 * B0 stepping of the BCM2711 SoC, and one using a C0 stepping.
+	 *
+	 * The two SoC versions have different, incompatible DMA mappings for
+	 * the on-board eMMC controller, which would normally make them require
+	 * two different DTs.
+	 *
+	 * Unfortunately for us, the different revisions don't actually _use_
+	 * different DTs - instead, the proprietary stage0 bootloader reads the DT,
+	 * patches it in-memory, then passes the corrected DT to the OS.
+	 *
+	 * In our case, the OS is actually U-Boot, and U-Boot can choose to
+	 * completely disregard the firmware-supplied DT and load a custom one
+	 * instead, which is used by, e.g., NixOS.
+	 *
+	 * When that happens, the DT patches applied by the firmware are also
+	 * thrown out, which leads to BCM2711C0 boards being unable to boot
+	 * due to them trying to use the hardcoded DMA mappings in the DT
+	 * (which are for the B0 revision).
+	 *
+	 * Work around that by manually copying the DMA region setup from the
+	 * firmware-provided DT into whatever DT we're actually being asked
+	 * to load.
+	 */
+	void *fw_fdt = (void *)fw_dtb_pointer;
+	int fw_emmc_node;
+	int our_emmc_node;
+	int length;
+	const void *fw_value;
+	int result;
+
+	fw_emmc_node = fdt_path_offset(fw_fdt, "emmc2bus");
+	if (fw_emmc_node < 0) {
+		printf("RPi: Failed to find EMMC config in FW DT: %d\n", fw_emmc_node);
+		return;
+	}
+
+	our_emmc_node = fdt_path_offset(our_fdt, "emmc2bus");
+	if (our_emmc_node < 0) {
+		printf("RPi: Failed to find EMMC config in our DT: %d\n", our_emmc_node);
+		return;
+	}
+
+	*fw_value = fdt_getprop(fw_fdt, fw_emmc_node, "dma-ranges", &length);
+	if (!fw_value) {
+		printf("RPi: Failed to get EMMC DMA ranges property from FW DT: %d\n", length);
+		return;
+	}
+
+	result = fdt_setprop(our_fdt, our_emmc_node, "dma-ranges", fw_value, length);
+	if (result != 0) {
+		printf("RPi: Failed to set EMMC DMA ranges property in our DT: %d\n", result);
+		return;
+	}
+
+	printf("RPi: successfully copied FW DT EMMC configuration to our DT!\n");
+}
+
 int ft_board_setup(void *blob, struct bd_info *bd)
 {
 	int node;
@@ -508,6 +569,8 @@ int ft_board_setup(void *blob, struct bd_info *bd)
 	efi_add_memory_map(0, CONFIG_RPI_EFI_NR_SPIN_PAGES << EFI_PAGE_SHIFT,
 			   EFI_RESERVED_MEMORY_TYPE);
 #endif
+
+	copy_emmc_config(blob);
 
 	return 0;
 }
