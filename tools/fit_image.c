@@ -535,8 +535,19 @@ static int fit_extract_data(struct image_tool_params *params, const char *fname)
 	for (node = fdt_first_subnode(fdt, images);
 	     node >= 0;
 	     node = fdt_next_subnode(fdt, node)) {
+		ulong load_addr;
 		const char *data;
 		int len;
+
+		/*
+		 * HACK: Do not extract data that should be loaded
+		 *       outside normal SDRAM range, 0x0 - 0xf0000000.
+		 *       Workaround to avoid failed DMA read from
+		 *       non-secure MMC into secure SRAM.
+		 */
+		if (!fit_image_get_load(fdt, node, &load_addr) &&
+		    load_addr > 0xf0000000)
+			continue;
 
 		data = fdt_getprop(fdt, node, FIT_DATA_PROP, &len);
 		if (!data)
