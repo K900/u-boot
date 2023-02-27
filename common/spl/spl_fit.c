@@ -570,6 +570,12 @@ static void warn_deprecated(const char *msg)
 	printf("\tSee doc/uImage.FIT/source_file_format.txt\n");
 }
 
+__weak int fpga_load(int devnum, const void *buf, size_t bsize,
+		     bitstream_type bstype, int flags)
+{
+	return 0;
+}
+
 static int spl_fit_upload_fpga(struct spl_fit_info *ctx, int node,
 			       struct spl_image_info *fpga_image)
 {
