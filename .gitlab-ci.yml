@@ -39,4 +39,5 @@ build rock-5b:
     paths:
       - u-boot.itb
       - idbloader.img
+      - u-boot-rockchip.bin
       - rock5b-rk3588.bin
