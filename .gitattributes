@@ -6,3 +6,4 @@
 *.ttf binary
 *.gz binary
 *.png binary
+rk3588_spl_loader_v1.08.111.bin filter=lfs diff=lfs merge=lfs -text
