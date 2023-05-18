@@ -41,3 +41,4 @@ build rock-5b:
       - idbloader.img
       - u-boot-rockchip.bin
       - rock5b-rk3588.bin
+      - rk3588_spl_loader_v1.08.111.bin
