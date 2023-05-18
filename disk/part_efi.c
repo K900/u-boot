@@ -74,6 +74,7 @@ static char *print_efiname(gpt_entry *pte)
 }
 
 static const efi_guid_t system_guid = PARTITION_SYSTEM_GUID;
+static const efi_guid_t arm64_rootfs_guid = PARTITION_ARM64_ROOTFS_GUID;
 
 static int get_bootable(gpt_entry *p)
 {
@@ -81,6 +82,9 @@ static int get_bootable(gpt_entry *p)
 
 	if (!memcmp(&p->partition_type_guid, &system_guid, sizeof(efi_guid_t)))
 		ret |=  PART_EFI_SYSTEM_PARTITION;
+	if (!memcmp(&p->partition_type_guid, &arm64_rootfs_guid,
+		    sizeof(efi_guid_t)))
+		ret |=  PART_BOOTABLE;
 	if (p->attributes.fields.legacy_bios_bootable)
 		ret |=  PART_BOOTABLE;
 	return ret;

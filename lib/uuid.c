@@ -93,6 +93,7 @@ static const struct {
 } list_guid[] = {
 #ifdef CONFIG_PARTITION_TYPE_GUID
 	{"system",	PARTITION_SYSTEM_GUID},
+	{"arm64_rootfs",PARTITION_ARM64_ROOTFS_GUID},
 	{"mbr",		LEGACY_MBR_PARTITION_GUID},
 	{"msft",	PARTITION_MSFT_RESERVED_GUID},
 	{"data",	PARTITION_BASIC_DATA_GUID},
